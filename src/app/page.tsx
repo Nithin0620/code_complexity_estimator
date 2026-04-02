@@ -2,14 +2,14 @@
 import { useState, useEffect } from 'react';
 import { getOrCreateUid } from '@/lib/auth';
 import { ComplexityResult, Snippet } from '@/types';
-import { 
-  ResponsiveContainer, 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  Tooltip, 
-  CartesianGrid 
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid
 } from 'recharts';
 
 /** Color for the complexity level */
@@ -78,7 +78,7 @@ export default function Home() {
 
       {/* Two-Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        
+
         {/* LEFT: Code Input */}
         <div className="flex flex-col gap-4">
           <label className="text-slate-500 text-xs font-bold uppercase tracking-widest px-1">Code Input</label>
@@ -128,7 +128,7 @@ export default function Home() {
           {/* Results */}
           {result && !loading && (
             <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
-              
+
               {/* ── Complexity Summary ── */}
               <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5">
                 {/* Level + Score row */}
@@ -227,7 +227,7 @@ export default function Home() {
                     fontSize: '12px',
                     fontWeight: 700,
                   }}
-                  formatter={(v: number) => [v, 'Operations']}
+                  formatter={(v) => [v ?? 0, 'Operations']}
                   labelFormatter={(l) => `n = ${l}`}
                 />
                 <Area
