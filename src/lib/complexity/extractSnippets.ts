@@ -1,67 +1,62 @@
 import { Snippet } from '@/types';
 
 /**
- * Extracts relevant code snippets that contribute to complexity scoring.
- * Points of interest include loops, nested loops, and recursion.
+ * Extracts hotspots from source code with support for Space Complexity analysis.
+ * Identifies lines of interests: loops, recursion, and memory allocations.
  * 
- * @param code - Raw source code as a string.
- * @param functionNames - Names of potential recursive functions.
- * @returns Array of snippets with line numbers and types.
+ * @param code - Raw source code (post cleaning)
+ * @param functionNames - Known function names to check for recursion
+ * @returns Array of snippets for UI highlighting
  */
 export function extractSnippets(code: string, functionNames: string[]): Snippet[] {
   const snippets: Snippet[] = [];
   const lines = code.split('\n');
   let currentDepth = 0;
-  let maxLoopDepth = 0;
-
-  // First pass: detect depth and find snippets
-  const rawSnippets: (Snippet & { depth: number })[] = [];
 
   lines.forEach((line, index) => {
     const trimmed = line.trim();
-    if (!trimmed) return;
+    if (!trimmed || trimmed.startsWith('/') || trimmed.startsWith('*')) return;
 
-    // Keyword detection
+    // Detection rules
     const hasLoop = /\b(for|while)\s*\(/.test(trimmed);
     
-    // Check for recursion calls (function names being reused on this specific line)
     const hasRecursion = functionNames.some(name => {
       const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const callRegex = new RegExp(`\\b${escapedName}\\s*\\(`, 'g');
-      
-      const matches = (trimmed.match(callRegex) || []).length;
+      // If it exists and isn't a definition line, mark as call
       const isDef = /(?:function|const|let|var)\s+/.test(trimmed);
-      
-      return matches > 0 && !isDef;
+      return callRegex.test(trimmed) && !isDef;
     });
 
+    const isAllocation = /\b(new\s+(Array|Map|Set|List|ArrayList)|\[|(?:\w+)\.push\(|(?:\w+)\[\w+\]\s*=)/gi.test(trimmed);
+
+    // Context determination
     if (hasLoop) {
-      if (currentDepth > maxLoopDepth) maxLoopDepth = currentDepth;
-      rawSnippets.push({
+      snippets.push({
         line: index + 1,
         code: trimmed.length > 60 ? trimmed.substring(0, 57) + '...' : trimmed,
-        type: currentDepth > 0 ? "nested-loop" : "loop",
-        depth: currentDepth
+        type: currentDepth > 0 ? "nested-loop" : "loop"
       });
     } else if (hasRecursion) {
-      rawSnippets.push({
+      snippets.push({
         line: index + 1,
-        code: trimmed.length > 60 ? trimmed.substring(0, 57) + '...' : trimmed,
-        type: "recursion",
-        depth: currentDepth
+        code: trimmed.substring(0, 60),
+        type: "recursion"
+      });
+    } else if (isAllocation) {
+      snippets.push({
+        line: index + 1,
+        code: trimmed.substring(0, 60),
+        type: "space-allocation"
       });
     }
 
-    // Update depth tracker for next lines
+    // Tracks nesting logic for determining "nested-loop" vs "loop"
     const opens = (trimmed.match(/\{/g) || []).length;
     const closes = (trimmed.match(/\}/g) || []).length;
     currentDepth += (opens - closes);
   });
 
-  // Second pass: Finalize and potentially mark 'deepest' if needed
-  return rawSnippets.map(s => ({
-      line: s.line,
-      code: s.code,
-      type: s.type
-  }));
+  // Pick the most relevant snippets to show in the results
+  return snippets.slice(0, 15);
 }

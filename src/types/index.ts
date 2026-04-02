@@ -2,6 +2,7 @@ export interface ComplexityResult {
   score: number;
   level: "Low" | "Medium" | "High";
   bigO: string;
+  spaceO: string;
   reasons: string[];
   snippets: Snippet[];
   graphData: GraphPoint[];
@@ -10,7 +11,7 @@ export interface ComplexityResult {
 export interface Snippet {
   line: number;
   code: string;
-  type: "loop" | "nested-loop" | "recursion";
+  type: "loop" | "nested-loop" | "recursion" | "space-allocation";
 }
 
 export interface GraphPoint {
